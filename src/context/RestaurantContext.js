@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { saveOrderHistoryToCSV, loadOrderHistoryFromCSV } from '../utils/csvUtils';
+import { saveOrderToCSV, loadOrderHistoryFromCSV } from '../utils/csvUtils';
 
 export const RestaurantContext = createContext();
 
@@ -22,57 +22,48 @@ export const RestaurantProvider = ({ children }) => {
 
     loadOrderHistoryFromCSV().then(loadedHistory => {
       setOrderHistory(loadedHistory);
+      if (loadedHistory.length > 0) {
+        const maxOrderNumber = Math.max(...loadedHistory.map(order => order.orderNumber));
+        setOrderNumberState(maxOrderNumber + 1);
+      }
     });
   }, []);
 
   // Save metadata to local storage
   const saveMetadata = useCallback(() => {
-    const metadataToSave = {
+    localStorage.setItem('restaurantMetadata', JSON.stringify({
       speedyMode,
       maxCustomers,
       orderNumber,
-    };
-    localStorage.setItem('restaurantMetadata', JSON.stringify(metadataToSave));
+    }));
   }, [speedyMode, maxCustomers, orderNumber]);
 
   // Custom setters that save metadata
   const setSpeedyMode = useCallback((value) => {
     setSpeedyModeState(value);
-    localStorage.setItem('restaurantMetadata', JSON.stringify({
-      speedyMode: value,
-      maxCustomers,
-      orderNumber,
-    }));
-  }, [maxCustomers, orderNumber]);
+    saveMetadata();
+  }, [saveMetadata]);
 
   const setMaxCustomers = useCallback((value) => {
     setMaxCustomersState(value);
-    localStorage.setItem('restaurantMetadata', JSON.stringify({
-      speedyMode,
-      maxCustomers: value,
-      orderNumber,
-    }));
-  }, [speedyMode, orderNumber]);
+    saveMetadata();
+  }, [saveMetadata]);
 
   const setOrderNumber = useCallback((value) => {
     setOrderNumberState(value);
-    localStorage.setItem('restaurantMetadata', JSON.stringify({
-      speedyMode,
-      maxCustomers,
-      orderNumber: value,
-    }));
-  }, [speedyMode, maxCustomers]);
-
-  // Save order history to CSV whenever it changes
-  useEffect(() => {
-    saveOrderHistoryToCSV(orderHistory);
-  }, [orderHistory]);
+    saveMetadata();
+  }, [saveMetadata]);
 
   const addOrderToHistory = useCallback((newOrder) => {
     setOrderHistory(prevHistory => {
-      const updatedOrder = { ...newOrder, orderNumber };
+      const updatedOrder = {
+        ...newOrder,
+        orderNumber: orderNumber,
+        orderTimestamp: new Date().toISOString(),
+      };
       const updatedHistory = [...prevHistory, updatedOrder];
       setOrderNumber(prevNumber => prevNumber + 1);
+      saveOrderToCSV(updatedOrder);
       return updatedHistory;
     });
   }, [orderNumber, setOrderNumber]);
@@ -91,6 +82,7 @@ export const RestaurantProvider = ({ children }) => {
     currentPage,
     setCurrentPage: setCurrentPageSafely,
     orderHistory,
+    setOrderHistory,
     addOrderToHistory,
     orderNumber,
   };

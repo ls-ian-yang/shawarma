@@ -1,16 +1,32 @@
 import React, { useEffect } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
+import { exportToCSV, clearOrderHistoryCSV } from '../utils/csvUtils';
 
 const DB = () => {
-  const { setCurrentPage, orderHistory } = useRestaurant();
+  const { setCurrentPage, orderHistory, setOrderHistory } = useRestaurant();
 
   useEffect(() => {
     setCurrentPage('db');
   }, [setCurrentPage]);
 
+  const handleExport = () => {
+    exportToCSV(orderHistory, 'order_history.csv');
+  };
+
+  const handleClearCache = () => {
+    if (window.confirm('Are you sure you want to clear all order history? This action cannot be undone.')) {
+      clearOrderHistoryCSV();
+      setOrderHistory([]);
+    }
+  };
+
   return (
     <div className="db">
       <h2>All Orders</h2>
+      <div>
+        <button onClick={handleExport}>Export to CSV</button>
+        <button onClick={handleClearCache} style={{marginLeft: '10px'}}>Clear Cache</button>
+      </div>
       {orderHistory && orderHistory.length > 0 ? (
         <table>
           <thead>
@@ -28,7 +44,7 @@ const DB = () => {
               <tr key={order.orderNumber}>
                 <td>{order.orderNumber}</td>
                 <td>{new Date(order.orderTimestamp).toLocaleString()}</td>
-                <td>{order.order.join(', ')}</td>
+                <td>{Array.isArray(order.order) ? order.order.join(', ') : order.order}</td>
                 <td>{order.desiredWine}</td>
                 <td>{order.predictedWine}</td>
                 <td>{order.satisfied ? 'Yes' : 'No'}</td>
