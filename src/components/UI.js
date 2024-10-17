@@ -21,10 +21,7 @@ const UI = ({ maxCustomersPerSecond, setMaxCustomersPerSecond, speedyMode, setSp
           id="speedyMode"
           type="checkbox"
           checked={speedyMode}
-          onChange={(e) => {
-            setSpeedyMode(e.target.checked);
-            console.log('Speedy Mode changed:', e.target.checked); // Add this line for debugging
-          }}
+          onChange={(e) => setSpeedyMode(e.target.checked)}
         />
       </div>
     </div>

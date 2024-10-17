@@ -1,33 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import './Restaurant.css';
 import { useRestaurant } from '../context/RestaurantContext';
 
 const Restaurant = () => {
   const { 
-    isOperating, 
-    speedyMode, 
-    setSpeedyMode, 
-    maxCustomers, 
-    setMaxCustomers, 
-    setCurrentPage,
     orderHistory,
-    addOrderToHistory
+    setCurrentPage
   } = useRestaurant();
 
   useEffect(() => {
     setCurrentPage('restaurant');
   }, [setCurrentPage]);
-
-  const placeOrder = (customerNumber, wineName) => {
-    // Your existing order processing logic
-    
-    // Add this line to update the order history
-    addOrderToHistory({ customerNumber, wineName });
-  };
-
-  useEffect(() => {
-    console.log('Order history updated:', orderHistory);
-  }, [orderHistory]);
 
   return (
     <div className="restaurant">
@@ -46,11 +29,10 @@ const Restaurant = () => {
                 </span>
               </div>
               <div className="order-details">
-                <p><strong>Customer:</strong> {order.customerNumber}</p>
-                <p><strong>Order:</strong> {order.order.join(', ')}</p>
+                <p><strong>Order:</strong> {order.order}</p>
                 <p><strong>Desired Wine:</strong> {order.desiredWine}</p>
                 <p><strong>Predicted Wine:</strong> {order.predictedWine}</p>
-                <p><strong>Prediction Time:</strong> {order.predictionTime.toFixed(2)} ms</p>
+                <p><strong>Prediction Time:</strong> {order.predictionTime} ms</p>
               </div>
             </div>
           ))}

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { saveOrderHistoryToCSV, loadOrderHistoryFromCSV } from '../utils/csvUtils';
 
 export const RestaurantContext = createContext();
 
@@ -6,11 +7,66 @@ export const useRestaurant = () => useContext(RestaurantContext);
 
 export const RestaurantProvider = ({ children }) => {
   const [isOperating, setIsOperating] = useState(true);
-  const [speedyMode, setSpeedyMode] = useState(false);
-  const [maxCustomers, setMaxCustomers] = useState(1);
+  const [speedyMode, setSpeedyModeState] = useState(false);
+  const [maxCustomers, setMaxCustomersState] = useState(1);
   const [currentPage, setCurrentPage] = useState('restaurant');
   const [orderHistory, setOrderHistory] = useState([]);
-  const [orderNumber, setOrderNumber] = useState(1);
+  const [orderNumber, setOrderNumberState] = useState(1);
+
+  // Load metadata from local storage and order history from CSV on initial render
+  useEffect(() => {
+    const loadedMetadata = JSON.parse(localStorage.getItem('restaurantMetadata')) || {};
+    setSpeedyModeState(loadedMetadata.speedyMode || false);
+    setMaxCustomersState(loadedMetadata.maxCustomers || 1);
+    setOrderNumberState(loadedMetadata.orderNumber || 1);
+
+    loadOrderHistoryFromCSV().then(loadedHistory => {
+      setOrderHistory(loadedHistory);
+    });
+  }, []);
+
+  // Save metadata to local storage
+  const saveMetadata = useCallback(() => {
+    const metadataToSave = {
+      speedyMode,
+      maxCustomers,
+      orderNumber,
+    };
+    localStorage.setItem('restaurantMetadata', JSON.stringify(metadataToSave));
+  }, [speedyMode, maxCustomers, orderNumber]);
+
+  // Custom setters that save metadata
+  const setSpeedyMode = useCallback((value) => {
+    setSpeedyModeState(value);
+    localStorage.setItem('restaurantMetadata', JSON.stringify({
+      speedyMode: value,
+      maxCustomers,
+      orderNumber,
+    }));
+  }, [maxCustomers, orderNumber]);
+
+  const setMaxCustomers = useCallback((value) => {
+    setMaxCustomersState(value);
+    localStorage.setItem('restaurantMetadata', JSON.stringify({
+      speedyMode,
+      maxCustomers: value,
+      orderNumber,
+    }));
+  }, [speedyMode, orderNumber]);
+
+  const setOrderNumber = useCallback((value) => {
+    setOrderNumberState(value);
+    localStorage.setItem('restaurantMetadata', JSON.stringify({
+      speedyMode,
+      maxCustomers,
+      orderNumber: value,
+    }));
+  }, [speedyMode, maxCustomers]);
+
+  // Save order history to CSV whenever it changes
+  useEffect(() => {
+    saveOrderHistoryToCSV(orderHistory);
+  }, [orderHistory]);
 
   const addOrderToHistory = useCallback((newOrder) => {
     setOrderHistory(prevHistory => {
@@ -19,11 +75,10 @@ export const RestaurantProvider = ({ children }) => {
       setOrderNumber(prevNumber => prevNumber + 1);
       return updatedHistory;
     });
-  }, [orderNumber]);
+  }, [orderNumber, setOrderNumber]);
 
   const setCurrentPageSafely = useCallback((page) => {
     setCurrentPage(page);
-    // We no longer automatically set isOperating to true here
   }, []);
 
   const value = {
