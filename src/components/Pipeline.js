@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
@@ -15,10 +15,42 @@ const Pipeline = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [preparedOrders, setPreparedOrders] = useState([]);
+  const [expandedPanel, setExpandedPanel] = useState('panel1');
+
+  const extractedTableRef = useRef(null);
+  const preparedTableRef = useRef(null);
+  const shouldRestoreScroll = useRef(true);
 
   useEffect(() => {
     setCurrentPage('pipeline');
   }, [setCurrentPage]);
+
+  const restoreScrollPosition = useCallback(() => {
+    const extractedScrollPos = localStorage.getItem('extractedScrollPos');
+    const preparedScrollPos = localStorage.getItem('preparedScrollPos');
+    
+    if (extractedScrollPos && extractedTableRef.current) {
+      extractedTableRef.current.scrollTop = parseInt(extractedScrollPos);
+    }
+    if (preparedScrollPos && preparedTableRef.current) {
+      preparedTableRef.current.scrollTop = parseInt(preparedScrollPos);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (shouldRestoreScroll.current) {
+      restoreScrollPosition();
+      shouldRestoreScroll.current = false;
+    }
+  }, [restoreScrollPosition, orderHistory]);
+
+  useEffect(() => {
+    shouldRestoreScroll.current = true;
+  }, [orderHistory]);
+
+  const handleAccordionChange = (panel) => (event, isExpanded) => {
+    setExpandedPanel(isExpanded ? panel : false);
+  };
 
   const handleExtract = () => {
     const start = parseInt(startOrderNumber);
@@ -42,8 +74,19 @@ const Pipeline = () => {
     setIsPreparing(false);
   };
 
-  const DataTable = ({ data }) => (
-    <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+  const handleScroll = useCallback((ref, key) => {
+    if (ref.current) {
+      localStorage.setItem(key, ref.current.scrollTop.toString());
+    }
+  }, []);
+
+  const DataTable = React.forwardRef(({ data, onScroll }, ref) => (
+    <TableContainer 
+      component={Paper} 
+      sx={{ maxHeight: 400, overflow: 'auto' }} 
+      ref={ref}
+      onScroll={onScroll}
+    >
       <Table stickyHeader>
         <TableHead>
           <TableRow>
@@ -67,13 +110,13 @@ const Pipeline = () => {
         </TableBody>
       </Table>
     </TableContainer>
-  );
+  ));
 
   return (
     <Box sx={{ padding: 2 }}>
       <Typography variant="h4" gutterBottom>Data Cleaning Pipeline</Typography>
       
-      <Accordion>
+      <Accordion expanded={expandedPanel === 'panel1'} onChange={handleAccordionChange('panel1')}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h6">1. Data Extraction</Typography>
         </AccordionSummary>
@@ -100,13 +143,17 @@ const Pipeline = () => {
               <Typography variant="subtitle1" gutterBottom>
                 Extracted Orders: {extractedOrders.length}
               </Typography>
-              <DataTable data={extractedOrders} />
+              <DataTable 
+                data={extractedOrders} 
+                ref={extractedTableRef}
+                onScroll={() => handleScroll(extractedTableRef, 'extractedScrollPos')}
+              />
             </Box>
           )}
         </AccordionDetails>
       </Accordion>
 
-      <Accordion>
+      <Accordion expanded={expandedPanel === 'panel2'} onChange={handleAccordionChange('panel2')}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h6">2. Data Validation</Typography>
         </AccordionSummary>
@@ -124,7 +171,7 @@ const Pipeline = () => {
         </AccordionDetails>
       </Accordion>
 
-      <Accordion>
+      <Accordion expanded={expandedPanel === 'panel3'} onChange={handleAccordionChange('panel3')}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h6">3. Data Preparation</Typography>
         </AccordionSummary>
@@ -141,7 +188,11 @@ const Pipeline = () => {
               <Typography variant="subtitle1" gutterBottom>
                 Prepared Orders (Odd Order Numbers): {preparedOrders.length}
               </Typography>
-              <DataTable data={preparedOrders} />
+              <DataTable 
+                data={preparedOrders} 
+                ref={preparedTableRef}
+                onScroll={() => handleScroll(preparedTableRef, 'preparedScrollPos')}
+              />
             </Box>
           )}
         </AccordionDetails>
