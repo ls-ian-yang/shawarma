@@ -1,9 +1,13 @@
 import React, { useEffect } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
-import { exportToCSV, clearOrderHistoryCSV } from '../utils/csvUtils';
+import { exportToCSV, clearAllData } from '../utils/csvUtils';
 
 const DB = () => {
-  const { setCurrentPage, orderHistory, setOrderHistory } = useRestaurant();
+  const { 
+    setCurrentPage, 
+    orderHistory, 
+    resetAllData 
+  } = useRestaurant();
 
   useEffect(() => {
     setCurrentPage('db');
@@ -14,9 +18,9 @@ const DB = () => {
   };
 
   const handleClearCache = () => {
-    if (window.confirm('Are you sure you want to clear all order history? This action cannot be undone.')) {
-      clearOrderHistoryCSV();
-      setOrderHistory([]);
+    if (window.confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+      clearAllData();
+      resetAllData();
     }
   };
 
@@ -25,7 +29,7 @@ const DB = () => {
       <h2>All Orders</h2>
       <div>
         <button onClick={handleExport}>Export to CSV</button>
-        <button onClick={handleClearCache} style={{marginLeft: '10px'}}>Clear Cache</button>
+        <button onClick={handleClearCache} style={{marginLeft: '10px'}}>Clear All Data</button>
       </div>
       {orderHistory && orderHistory.length > 0 ? (
         <table>

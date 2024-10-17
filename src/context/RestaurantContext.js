@@ -72,6 +72,14 @@ export const RestaurantProvider = ({ children }) => {
     setCurrentPage(page);
   }, []);
 
+  const resetAllData = useCallback(() => {
+    setOrderHistory([]);
+    setSpeedyModeState(false);
+    setMaxCustomersState(1);
+    setOrderNumberState(1);
+    saveMetadata();
+  }, [saveMetadata]);
+
   const value = {
     isOperating,
     setIsOperating,
@@ -85,6 +93,7 @@ export const RestaurantProvider = ({ children }) => {
     setOrderHistory,
     addOrderToHistory,
     orderNumber,
+    resetAllData,
   };
 
   return (

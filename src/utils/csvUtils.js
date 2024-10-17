@@ -63,3 +63,8 @@ export const exportToCSV = (data, filename) => {
 export const clearOrderHistoryCSV = () => {
   localStorage.removeItem('orderHistoryCSV');
 };
+
+export const clearAllData = () => {
+  localStorage.removeItem('orderHistoryCSV');
+  localStorage.removeItem('restaurantMetadata');
+};
