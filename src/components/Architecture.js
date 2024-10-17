@@ -4,6 +4,7 @@ import DraggableButton from './DraggableButton';
 import Arrow from './Arrow';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import StorageIcon from '@mui/icons-material/Storage';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../context/RestaurantContext';
 
@@ -15,11 +16,13 @@ const Architecture = () => {
 
   const [components, setComponents] = useState([
     { id: 'restaurant', position: { x: 0, y: 0 }, text: 'Restaurant', icon: LocalDiningIcon, path: '/restaurant' },
-    { id: 'db', position: { x: 0, y: 0 }, text: 'DB', icon: StorageIcon, path: '/db' }
+    { id: 'db', position: { x: 0, y: 0 }, text: 'DB', icon: StorageIcon, path: '/db' },
+    { id: 'pipeline', position: { x: 0, y: 0 }, text: 'Pipeline', icon: SettingsIcon, path: '/pipeline' }
   ]);
 
   const [arrows] = useState([
-    { from: 'restaurant', to: 'db' }
+    { from: 'restaurant', to: 'db' },
+    { from: 'db', to: 'pipeline' }
   ]);
 
   useEffect(() => {

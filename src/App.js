@@ -10,6 +10,7 @@ import RestaurantPage from './pages/RestaurantPage';
 import DB from './components/DB';
 import Architecture from './components/Architecture';
 import { RestaurantProvider } from './context/RestaurantContext';
+import Pipeline from './components/Pipeline';
 
 const theme = createTheme();
 
@@ -30,15 +31,19 @@ function App() {
               <Button color="inherit" component={Link} to="/db">
                 DB
               </Button>
+              <Button color="inherit" component={Link} to="/pipeline">
+                Pipeline
+              </Button>
             </Toolbar>
           </AppBar>
 
-          <RestaurantPage />  {/* Always render RestaurantPage */}
+          <RestaurantPage />
 
           <Routes>
-            <Route path="/" element={null} />  {/* Empty element for home route */}
+            <Route path="/" element={null} />
             <Route path="/db" element={<DB />} />
             <Route path="/architecture" element={<Architecture />} />
+            <Route path="/pipeline" element={<Pipeline />} />
           </Routes>
         </Router>
       </RestaurantProvider>

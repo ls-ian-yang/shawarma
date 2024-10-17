@@ -80,6 +80,17 @@ export const RestaurantProvider = ({ children }) => {
     saveMetadata();
   }, [saveMetadata]);
 
+  const getPreparedData = useCallback(() => {
+    const oddOrders = orderHistory.filter(order => order.orderNumber % 2 !== 0);
+    return oddOrders.map(order => ({
+      orderNumber: order.orderNumber,
+      order: order.order,
+      desiredWine: order.desiredWine,
+      predictedWine: order.predictedWine,
+      satisfied: order.satisfied
+    }));
+  }, [orderHistory]);
+
   const value = {
     isOperating,
     setIsOperating,
@@ -94,6 +105,7 @@ export const RestaurantProvider = ({ children }) => {
     addOrderToHistory,
     orderNumber,
     resetAllData,
+    getPreparedData,
   };
 
   return (
