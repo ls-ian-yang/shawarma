@@ -1,0 +1,91 @@
+.architecture {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.component {
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px;
+  text-align: center;
+  min-width: 150px;
+}
+
+.main {
+  background-color: #f0f0f0;
+}
+
+.sub-components {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+}
+
+.restaurant-page {
+  background-color: #a5d6a7;
+}
+
+.db-page {
+  background-color: #81d4fa;
+}
+
+.arrows {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+  margin: 20px 0;
+}
+
+.arrow {
+  width: 100px;
+  height: 2px;
+  background-color: #333;
+  position: relative;
+}
+
+.arrow::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid #333;
+  border-right: 2px solid #333;
+}
+
+.arrow-left::after {
+  left: 0;
+  top: -4px;
+  transform: rotate(-135deg);
+}
+
+.arrow-right::after {
+  right: 0;
+  top: -4px;
+  transform: rotate(45deg);
+}
+
+.back-button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #f44336;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.component a {
+  text-decoration: none;
+  color: inherit;
+}
