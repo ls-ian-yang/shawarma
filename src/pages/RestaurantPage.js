@@ -23,7 +23,8 @@ function RestaurantPage() {
     setMaxCustomers,
     isOperating,
     setIsOperating,
-    setCurrentPage
+    setCurrentPage,
+    waiter  // This is now a regular object, not a ref
   } = useRestaurant();
 
   const [currentInteraction, setCurrentInteraction] = useState({});
@@ -31,7 +32,6 @@ function RestaurantPage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const dataCollector = useRef(new DataCollector());
-  const waiter = useRef(new Waiter(new SimpleModel()));
   const timerRef = useRef(null);
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -73,7 +73,7 @@ function RestaurantPage() {
     setOrderStage(1); // Waiter is thinking
 
     const startTime = performance.now();
-    const predictedWine = await waiter.current.predictWine(order);
+    const predictedWine = await waiter.predictWine(order);  // Remove .current
     const endTime = performance.now();
     const predictionTime = endTime - startTime;
 
@@ -105,7 +105,7 @@ function RestaurantPage() {
     if (!speedyMode) await delay(DIALOG_PAUSE);
 
     setIsProcessing(false);
-  }, [speedyMode, isProcessing, addOrderToHistory, isOperating]);
+  }, [speedyMode, isProcessing, addOrderToHistory, isOperating, waiter]);
 
   const scheduleNextOrder = useCallback(() => {
     if (timerRef.current) {

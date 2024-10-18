@@ -1,5 +1,8 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { saveOrderToCSV, loadOrderHistoryFromCSV } from '../utils/csvUtils';
+import Waiter from '../models/Waiter';
+import SimpleModel from '../models/SimpleModel';
+import ModelRegistry from '../models/ModelRegistry';
 
 export const RestaurantContext = createContext();
 
@@ -12,6 +15,8 @@ export const RestaurantProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState('restaurant');
   const [orderHistory, setOrderHistory] = useState([]);
   const [orderNumber, setOrderNumberState] = useState(1);
+  const [waiter] = useState(() => new Waiter(new SimpleModel()));
+  const [modelRegistry] = useState(() => new ModelRegistry(waiter));
 
   // Load metadata from local storage and order history from CSV on initial render
   useEffect(() => {
@@ -91,6 +96,11 @@ export const RestaurantProvider = ({ children }) => {
     }));
   }, [orderHistory]);
 
+  // New function to get a snapshot of the order history
+  const getOrderHistorySnapshot = useCallback(() => {
+    return [...orderHistory];
+  }, [orderHistory]);
+
   const value = {
     isOperating,
     setIsOperating,
@@ -106,6 +116,9 @@ export const RestaurantProvider = ({ children }) => {
     orderNumber,
     resetAllData,
     getPreparedData,
+    getOrderHistorySnapshot,
+    waiter,
+    modelRegistry,
   };
 
   return (

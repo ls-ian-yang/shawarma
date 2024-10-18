@@ -3,12 +3,29 @@ import { useRestaurant } from '../context/RestaurantContext';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   TextField, Button, CircularProgress, Typography, Box, Accordion, AccordionSummary, 
-  AccordionDetails
+  AccordionDetails, LinearProgress
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DummyAIModel from '../models/DummyAIModel';
+import ModelRegistry from '../models/ModelRegistry';
 
 const Pipeline = () => {
-  const { orderHistory, setCurrentPage } = useRestaurant();
+  const { 
+    waiter, 
+    modelRegistry,
+    setCurrentPage, 
+    orderHistory 
+  } = useRestaurant();
+  const modelRegistryRef = useRef(null);
+
+  useEffect(() => {
+    modelRegistryRef.current = new ModelRegistry(waiter);
+  }, [waiter]);
+
+  useEffect(() => {
+    setCurrentPage('pipeline');
+  }, [setCurrentPage]);
+
   const [startOrderNumber, setStartOrderNumber] = useState('');
   const [endOrderNumber, setEndOrderNumber] = useState('');
   const [extractedOrders, setExtractedOrders] = useState([]);
@@ -16,14 +33,19 @@ const Pipeline = () => {
   const [isPreparing, setIsPreparing] = useState(false);
   const [preparedOrders, setPreparedOrders] = useState([]);
   const [expandedPanel, setExpandedPanel] = useState('panel1');
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState(0);
+  const [tempModel, setTempModel] = useState(null);
+
+  const tempModelRef = useRef(new DummyAIModel());
 
   const extractedTableRef = useRef(null);
   const preparedTableRef = useRef(null);
   const shouldRestoreScroll = useRef(true);
 
-  useEffect(() => {
-    setCurrentPage('pipeline');
-  }, [setCurrentPage]);
+  // Use useMemo to create static references for extractedOrders and preparedOrders
+  const extractedOrdersRef = useRef([]);
+  const preparedOrdersRef = useRef([]);
 
   const restoreScrollPosition = useCallback(() => {
     const extractedScrollPos = localStorage.getItem('extractedScrollPos');
@@ -52,14 +74,21 @@ const Pipeline = () => {
     setExpandedPanel(isExpanded ? panel : false);
   };
 
-  const handleExtract = () => {
+  const handleExtract = useCallback(() => {
     const start = parseInt(startOrderNumber);
     const end = parseInt(endOrderNumber);
     const filtered = orderHistory.filter(order => 
       order.orderNumber >= start && order.orderNumber <= end
     );
+    extractedOrdersRef.current = filtered;
     setExtractedOrders(filtered);
-  };
+    
+    // Reset scroll position for extracted orders
+    localStorage.setItem('extractedScrollPos', '0');
+    if (extractedTableRef.current) {
+      extractedTableRef.current.scrollTop = 0;
+    }
+  }, [orderHistory, startOrderNumber, endOrderNumber]);
 
   const handleValidate = async () => {
     setIsValidating(true);
@@ -67,12 +96,19 @@ const Pipeline = () => {
     setIsValidating(false);
   };
 
-  const handlePrepare = () => {
+  const handlePrepare = useCallback(() => {
     setIsPreparing(true);
-    const oddOrders = extractedOrders.filter(order => order.orderNumber % 2 !== 0);
+    const oddOrders = extractedOrdersRef.current.filter(order => order.orderNumber % 2 !== 0);
+    preparedOrdersRef.current = oddOrders;
     setPreparedOrders(oddOrders);
     setIsPreparing(false);
-  };
+
+    // Reset scroll position for prepared orders
+    localStorage.setItem('preparedScrollPos', '0');
+    if (preparedTableRef.current) {
+      preparedTableRef.current.scrollTop = 0;
+    }
+  }, []);
 
   const handleScroll = useCallback((ref, key) => {
     if (ref.current) {
@@ -111,6 +147,31 @@ const Pipeline = () => {
       </Table>
     </TableContainer>
   ));
+
+  const handleTrain = useCallback(async () => {
+    setIsTraining(true);
+    setTrainingProgress(0);
+
+    const progressInterval = setInterval(() => {
+      setTrainingProgress(prev => Math.min(prev + 10, 100));
+    }, 200);
+
+    try {
+      const newTempModel = await modelRegistry.trainAndSaveModel(preparedOrders);
+      setTempModel(newTempModel);
+    } finally {
+      clearInterval(progressInterval);
+      setIsTraining(false);
+      setTrainingProgress(100);
+    }
+  }, [modelRegistry, preparedOrders]);
+
+  const handleCommitModel = useCallback(() => {
+    if (tempModel) {
+      modelRegistry.commitModel(tempModel);
+      setTempModel(null);
+    }
+  }, [modelRegistry, tempModel]);
 
   return (
     <Box sx={{ padding: 2 }}>
@@ -194,6 +255,42 @@ const Pipeline = () => {
                 onScroll={() => handleScroll(preparedTableRef, 'preparedScrollPos')}
               />
             </Box>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion expanded={expandedPanel === 'panel4'} onChange={handleAccordionChange('panel4')}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">4: Train Model</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+            <Button 
+              variant="contained" 
+              onClick={handleTrain} 
+              disabled={isTraining || preparedOrders.length === 0}
+            >
+              Train Model
+            </Button>
+            {isTraining && (
+              <Box sx={{ width: '100%', mt: 2 }}>
+                <LinearProgress variant="determinate" value={trainingProgress} />
+              </Box>
+            )}
+            {tempModel && (
+              <Button 
+                variant="contained" 
+                onClick={handleCommitModel} 
+                sx={{ mt: 2, ml: 2 }}
+              >
+                Commit Model
+              </Button>
+            )}
+          {tempModel && (
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>Temporary Model Info</Typography>
+              <Typography>Version: {tempModel.version}</Typography>
+              <Typography>Last Trained: {tempModel.lastTrained}</Typography>
+            </Paper>
           )}
         </AccordionDetails>
       </Accordion>
