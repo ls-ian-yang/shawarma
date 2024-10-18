@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { Card, CardContent, Typography, Button, Grid, Box } from '@mui/material';
 
-const ModelManagement = () => {
+const ModelRegistryPage = () => {
   const { modelRegistry, waiter, setCurrentPage } = useRestaurant();
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [currentStaffModel, setCurrentStaffModel] = useState({ version: '(No version available)' });
 
   useEffect(() => {
-    setCurrentPage('modelManagement');
+    setCurrentPage('modelRegistry');
     updateModels();
     updateCurrentStaffModel();
   }, [setCurrentPage]);
@@ -121,4 +121,4 @@ const ModelManagement = () => {
   );
 };
 
-export default ModelManagement;
+export default ModelRegistryPage;

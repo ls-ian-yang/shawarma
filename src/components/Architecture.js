@@ -19,7 +19,7 @@ const Architecture = () => {
     { id: 'restaurant', position: { x: 0, y: 0 }, text: 'Restaurant', icon: LocalDiningIcon, path: '/restaurant' },
     { id: 'db', position: { x: 0, y: 0 }, text: 'DB', icon: StorageIcon, path: '/db' },
     { id: 'pipeline', position: { x: 0, y: 0 }, text: 'Pipeline', icon: SettingsIcon, path: '/pipeline' },
-    { id: 'modelManagement', position: { x: 0, y: 0 }, text: 'Model Management', icon: ModelTrainingIcon, path: '/model-management' }
+    { id: 'modelRegistry', position: { x: 0, y: 0 }, text: 'Model Registry', icon: ModelTrainingIcon, path: '/model-registry' }
   ]);
 
   const [arrows] = useState([
