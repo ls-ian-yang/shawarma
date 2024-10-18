@@ -6,6 +6,7 @@ import {
   AccordionDetails, LinearProgress, TablePagination
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ModelRegistry from '../models/ModelRegistry';
 
 const Pipeline = () => {
@@ -30,6 +31,12 @@ const Pipeline = () => {
   const [preparedRowsPerPage, setPreparedRowsPerPage] = useState(10);
 
   const [validationComplete, setValidationComplete] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState({
+    extract: false,
+    validate: false,
+    prepare: false,
+    train: false,
+  });
 
   const handleAccordionChange = (panel) => (event, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
@@ -42,6 +49,7 @@ const Pipeline = () => {
       order.orderNumber >= start && order.orderNumber <= end
     );
     setExtractedOrders(filtered);
+    setCompletedSteps(prev => ({ ...prev, extract: true }));
   }, [startOrderNumber, endOrderNumber]);
 
   const handleValidate = async () => {
@@ -50,6 +58,7 @@ const Pipeline = () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsValidating(false);
     setValidationComplete(true);
+    setCompletedSteps(prev => ({ ...prev, validate: true }));
   };
 
   const handlePrepare = useCallback(() => {
@@ -61,6 +70,7 @@ const Pipeline = () => {
     }));
     setPreparedOrders(preparedData);
     setIsPreparing(false);
+    setCompletedSteps(prev => ({ ...prev, prepare: true }));
   }, [extractedOrders]);
 
   const handleTrain = useCallback(async () => {
@@ -74,6 +84,7 @@ const Pipeline = () => {
     try {
       const newTempModel = await modelRegistryRef.current.trainAndSaveModel(preparedOrders);
       setTempModel(newTempModel);
+      setCompletedSteps(prev => ({ ...prev, train: true }));
     } finally {
       clearInterval(progressInterval);
       setIsTraining(false);
@@ -87,6 +98,15 @@ const Pipeline = () => {
       setTempModel(null);
     }
   }, [tempModel]);
+
+  const AccordionHeader = ({ title, step }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      <Typography variant="h6" sx={{ flexGrow: 1 }}>{title}</Typography>
+      {completedSteps[step] && (
+        <CheckCircleIcon sx={{ color: 'success.main' }} />
+      )}
+    </Box>
+  );
 
   const DataTable = React.forwardRef(({ data, page, rowsPerPage, onPageChange, onRowsPerPageChange, isPrepared }, ref) => (
     <>
@@ -152,7 +172,7 @@ const Pipeline = () => {
             
             <Accordion expanded={expandedPanel === 'panel1'} onChange={handleAccordionChange('panel1')}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">1. Data Extraction</Typography>
+                <AccordionHeader title="1. Data Extraction" step="extract" />
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={{ marginBottom: 2 }}>
@@ -196,7 +216,7 @@ const Pipeline = () => {
 
             <Accordion expanded={expandedPanel === 'panel2'} onChange={handleAccordionChange('panel2')}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">2. Validate Data</Typography>
+                <AccordionHeader title="2. Validate Data" step="validate" />
               </AccordionSummary>
               <AccordionDetails>
                 <Button 
@@ -221,7 +241,7 @@ const Pipeline = () => {
 
             <Accordion expanded={expandedPanel === 'panel3'} onChange={handleAccordionChange('panel3')}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">3. Data Preparation</Typography>
+                <AccordionHeader title="3. Data Preparation" step="prepare" />
               </AccordionSummary>
               <AccordionDetails>
                 <Button 
@@ -255,7 +275,7 @@ const Pipeline = () => {
 
             <Accordion expanded={expandedPanel === 'panel4'} onChange={handleAccordionChange('panel4')}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">4: Train Model</Typography>
+                <AccordionHeader title="4. Train Model" step="train" />
               </AccordionSummary>
               <AccordionDetails>
                 <Button 
