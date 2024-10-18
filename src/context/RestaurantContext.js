@@ -16,7 +16,7 @@ export const RestaurantProvider = ({ children }) => {
   const [orderHistory, setOrderHistory] = useState([]);
   const [orderNumber, setOrderNumberState] = useState(1);
   const [waiter] = useState(() => new Waiter(new SimpleModel()));
-  const [modelRegistry] = useState(() => new ModelRegistry(waiter));
+  const [modelRegistry] = useState(() => new ModelRegistry());
 
   // Load metadata from local storage and order history from CSV on initial render
   useEffect(() => {

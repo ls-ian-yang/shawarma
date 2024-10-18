@@ -2,10 +2,9 @@ import DummyAIModel from './DummyAIModel';
 import { useRestaurant } from '../context/RestaurantContext';
 
 class ModelRegistry {
-  constructor(waiter) {
+  constructor() {
     this.models = new Map();
     this.currentVersion = 0;
-    this.waiter = waiter;
     this.loadModels();
   }
 
@@ -27,10 +26,6 @@ class ModelRegistry {
     localStorage.setItem('aiModels', JSON.stringify(modelsToStore));
   }
 
-  getCurrentModel() {
-    return this.models.get(this.currentVersion) || new DummyAIModel(this.currentVersion);
-  }
-
   async trainAndSaveModel(data) {
     const newVersion = this.currentVersion + 1;
     const tempModel = new DummyAIModel(newVersion);
@@ -38,27 +33,37 @@ class ModelRegistry {
     return tempModel;
   }
 
+  getAllModels() {
+    return Array.from(this.models.entries()).map(([version, model]) => ({
+      version,
+      lastTrained: model.lastTrained,
+      // Add any other metadata you want to include
+    }));
+  }
+
+  getModelByVersion(version) {
+    return this.models.get(version);
+  }
+
+  deleteModel(version) {
+    if (this.models.has(version)) {
+      this.models.delete(version);
+      this.persistModels();
+      return true;
+    }
+    return false;
+  }
+
   commitModel(tempModel) {
     this.currentVersion = tempModel.version;
     this.models.set(this.currentVersion, tempModel);
     this.persistModels();
-    // Update the model used by the waiter
-    if (this.waiter) {
-      this.waiter.setModel(tempModel);
-    }
   }
 
   getModelInfo() {
-    const currentModel = this.getCurrentModel();
     return {
-      version: currentModel.version,
-      lastTrained: currentModel.lastTrained,
       totalModels: this.models.size
     };
-  }
-
-  getWaiter() {
-    return this.waiter;
   }
 }
 

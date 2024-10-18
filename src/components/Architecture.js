@@ -5,6 +5,7 @@ import Arrow from './Arrow';
 import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import StorageIcon from '@mui/icons-material/Storage';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
 import { useNavigate } from 'react-router-dom';
 import { useRestaurant } from '../context/RestaurantContext';
 
@@ -17,7 +18,8 @@ const Architecture = () => {
   const [components, setComponents] = useState([
     { id: 'restaurant', position: { x: 0, y: 0 }, text: 'Restaurant', icon: LocalDiningIcon, path: '/restaurant' },
     { id: 'db', position: { x: 0, y: 0 }, text: 'DB', icon: StorageIcon, path: '/db' },
-    { id: 'pipeline', position: { x: 0, y: 0 }, text: 'Pipeline', icon: SettingsIcon, path: '/pipeline' }
+    { id: 'pipeline', position: { x: 0, y: 0 }, text: 'Pipeline', icon: SettingsIcon, path: '/pipeline' },
+    { id: 'modelManagement', position: { x: 0, y: 0 }, text: 'Model Management', icon: ModelTrainingIcon, path: '/model-management' }
   ]);
 
   const [arrows] = useState([
@@ -33,7 +35,7 @@ const Architecture = () => {
       setComponents(prevComponents => prevComponents.map((comp, index) => ({
         ...comp,
         position: {
-          x: (containerWidth / 3) * (index + 1) - buttonWidth / 2,
+          x: (containerWidth / 4) * (index + 0.5) - buttonWidth / 2,
           y: containerHeight / 2 - buttonHeight / 2
         }
       })));

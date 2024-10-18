@@ -4,15 +4,16 @@ class Waiter {
   }
 
   async predictWine(order) {
-    console.log('the model is:', this.model);
     return await this.model.predict(order);
   }
 
   setModel(model) {
-    console.log('Setting model to:', model);
     this.model = model;
+  }
+
+  getModel() {
+    return this.model;
   }
 }
 
 export default Waiter;
-

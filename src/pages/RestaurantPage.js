@@ -4,8 +4,6 @@ import CurrentOrder from '../components/CurrentOrder';
 import Restaurant from '../components/Restaurant';
 import DataCollector from '../models/DataCollector';
 import Customer from '../models/Customer';
-import Waiter from '../models/Waiter';
-import SimpleModel from '../models/SimpleModel';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useLocation } from 'react-router-dom';
 

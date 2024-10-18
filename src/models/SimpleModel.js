@@ -1,4 +1,8 @@
 class SimpleModel {
+  constructor() {
+    this.version = 'simple-1.0';
+  }
+
   predict(order) {
     return new Promise(resolve => {
       setTimeout(() => {
