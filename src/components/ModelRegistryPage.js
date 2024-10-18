@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
-import { Card, CardContent, Typography, Button, Box, Paper, Stack } from '@mui/material';
+import { Card, CardContent, Typography, Button, Box, Paper, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ButtonBase } from '@mui/material';
 
 const ModelRegistryPage = () => {
   const { modelRegistry, waiter, setCurrentPage } = useRestaurant();
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [currentStaffModel, setCurrentStaffModel] = useState({ version: '(No version available)' });
+  const [deleteConfirmation, setDeleteConfirmation] = useState({ open: false, version: null });
 
   useEffect(() => {
     setCurrentPage('modelRegistry');
@@ -48,18 +49,23 @@ const ModelRegistryPage = () => {
     }
   };
 
-  const handleDeleteModel = (version) => {
-    const success = modelRegistry.deleteModel(version);
+  const handleDeleteConfirmation = (version) => {
+    setDeleteConfirmation({ open: true, version });
+  };
+
+  const handleDeleteConfirmed = () => {
+    const success = modelRegistry.deleteModel(deleteConfirmation.version);
     if (success) {
-      alert(`Model version ${version} deleted successfully!`);
+      alert(`Model version ${deleteConfirmation.version} deleted successfully!`);
       updateModels();
       updateCurrentStaffModel();
-      if (selectedModel && selectedModel.version === version) {
+      if (selectedModel && selectedModel.version === deleteConfirmation.version) {
         setSelectedModel(null);
       }
     } else {
       alert('Failed to delete model.');
     }
+    setDeleteConfirmation({ open: false, version: null });
   };
 
   return (
@@ -74,37 +80,44 @@ const ModelRegistryPage = () => {
             gap: 2
           }}>
             {models.map((model) => (
-              <Card 
+              <ButtonBase
                 key={model.version}
-                sx={{ 
-                  cursor: 'pointer',
-                  bgcolor: selectedModel?.version === model.version ? 'action.selected' : 'background.paper',
-                  '&:hover': {
-                    boxShadow: 3,
-                  },
-                  height: '200px', // Increased height
-                }}
                 onClick={() => handleSelectModel(model)}
+                sx={{ 
+                  display: 'block',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
               >
-                <CardContent>
-                  <Typography variant="h6" color="primary">Model {model.version}</Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Last Trained: {new Date(model.lastTrained).toLocaleString()}
-                  </Typography>
-                  <Button 
-                    size="small" 
-                    color="secondary" 
-                    variant="outlined"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteModel(model.version);
-                    }}
-                    sx={{ mt: 1 }}
-                  >
-                    Delete
-                  </Button>
-                </CardContent>
-              </Card>
+                <Card 
+                  sx={{ 
+                    bgcolor: selectedModel?.version === model.version ? 'action.selected' : 'background.paper',
+                    '&:hover': {
+                      boxShadow: 3,
+                    },
+                    height: '200px',
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h6" color="primary">Model {model.version}</Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Last Trained: {new Date(model.lastTrained).toLocaleString()}
+                    </Typography>
+                    <Button 
+                      size="small" 
+                      color="secondary" 
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteConfirmation(model.version);
+                      }}
+                      sx={{ mt: 1 }}
+                    >
+                      Delete
+                    </Button>
+                  </CardContent>
+                </Card>
+              </ButtonBase>
             ))}
           </Box>
         </Box>
@@ -134,6 +147,22 @@ const ModelRegistryPage = () => {
           </Paper>
         </Box>
       </Stack>
+
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, version: null })}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete Model version {deleteConfirmation.version}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmation({ open: false, version: null })}>Cancel</Button>
+          <Button onClick={handleDeleteConfirmed} color="secondary">Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

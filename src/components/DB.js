@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
 import { exportToCSV, clearAllData } from '../utils/csvUtils';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Typography, Box, Pagination } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Typography, Box, Pagination, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 const DB = () => {
   const { 
@@ -11,6 +11,7 @@ const DB = () => {
   } = useRestaurant();
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(100);
+  const [clearConfirmation, setClearConfirmation] = useState(false);
 
   useEffect(() => {
     setCurrentPage('db');
@@ -20,11 +21,14 @@ const DB = () => {
     exportToCSV(orderHistory, 'order_history.csv');
   };
 
-  const handleClearCache = () => {
-    if (window.confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-      clearAllData();
-      resetAllData();
-    }
+  const handleClearConfirmation = () => {
+    setClearConfirmation(true);
+  };
+
+  const handleClearConfirmed = () => {
+    clearAllData();
+    resetAllData();
+    setClearConfirmation(false);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -38,7 +42,7 @@ const DB = () => {
       <Typography variant="h4" gutterBottom>All Orders</Typography>
       <Box sx={{ mb: 2 }}>
         <Button variant="contained" onClick={handleExport} sx={{ mr: 1 }}>Export to CSV</Button>
-        <Button variant="contained" color="secondary" onClick={handleClearCache}>Clear All Data</Button>
+        <Button variant="contained" color="secondary" onClick={handleClearConfirmation}>Clear All Data</Button>
       </Box>
       {orderHistory && orderHistory.length > 0 ? (
         <>
@@ -79,6 +83,22 @@ const DB = () => {
       ) : (
         <Typography>No orders available.</Typography>
       )}
+
+      <Dialog
+        open={clearConfirmation}
+        onClose={() => setClearConfirmation(false)}
+      >
+        <DialogTitle>Confirm Clear All Data</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to clear all data? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearConfirmation(false)}>Cancel</Button>
+          <Button onClick={handleClearConfirmed} color="secondary">Clear</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
