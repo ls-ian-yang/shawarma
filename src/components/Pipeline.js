@@ -3,7 +3,7 @@ import { useRestaurant } from '../context/RestaurantContext';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   TextField, Button, CircularProgress, Typography, Box, Accordion, AccordionSummary, 
-  AccordionDetails, LinearProgress
+  AccordionDetails, LinearProgress, TablePagination
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DummyAIModel from '../models/DummyAIModel';
@@ -116,36 +116,53 @@ const Pipeline = () => {
     }
   }, []);
 
-  const DataTable = React.forwardRef(({ data, onScroll }, ref) => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ maxHeight: 400, overflow: 'auto' }} 
-      ref={ref}
-      onScroll={onScroll}
-    >
-      <Table stickyHeader>
-        <TableHead>
-          <TableRow>
-            <TableCell>Order Number</TableCell>
-            <TableCell>Order</TableCell>
-            <TableCell>Desired Wine</TableCell>
-            <TableCell>Predicted Wine</TableCell>
-            <TableCell>Satisfied</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((order) => (
-            <TableRow key={order.orderNumber}>
-              <TableCell>{order.orderNumber}</TableCell>
-              <TableCell>{order.order.join(', ')}</TableCell>
-              <TableCell>{order.desiredWine}</TableCell>
-              <TableCell>{order.predictedWine}</TableCell>
-              <TableCell>{order.satisfied ? 'Yes' : 'No'}</TableCell>
+  const [extractedPage, setExtractedPage] = useState(0);
+  const [extractedRowsPerPage, setExtractedRowsPerPage] = useState(10);
+  const [preparedPage, setPreparedPage] = useState(0);
+  const [preparedRowsPerPage, setPreparedRowsPerPage] = useState(10);
+
+  const DataTable = React.forwardRef(({ data, onScroll, page, rowsPerPage, onPageChange, onRowsPerPageChange }, ref) => (
+    <>
+      <TableContainer 
+        component={Paper} 
+        sx={{ maxHeight: 400, overflow: 'auto' }} 
+        ref={ref}
+        onScroll={onScroll}
+      >
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>Order Number</TableCell>
+              <TableCell>Order</TableCell>
+              <TableCell>Desired Wine</TableCell>
+              <TableCell>Predicted Wine</TableCell>
+              <TableCell>Satisfied</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((order) => (
+                <TableRow key={order.orderNumber}>
+                  <TableCell>{order.orderNumber}</TableCell>
+                  <TableCell>{order.order.join(', ')}</TableCell>
+                  <TableCell>{order.desiredWine}</TableCell>
+                  <TableCell>{order.predictedWine}</TableCell>
+                  <TableCell>{order.satisfied ? 'Yes' : 'No'}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        component="div"
+        count={data.length}
+        page={page}
+        onPageChange={onPageChange}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={onRowsPerPageChange}
+      />
+    </>
   ));
 
   const handleTrain = useCallback(async () => {
@@ -208,6 +225,13 @@ const Pipeline = () => {
                 data={extractedOrders} 
                 ref={extractedTableRef}
                 onScroll={() => handleScroll(extractedTableRef, 'extractedScrollPos')}
+                page={extractedPage}
+                rowsPerPage={extractedRowsPerPage}
+                onPageChange={(event, newPage) => setExtractedPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                  setExtractedRowsPerPage(parseInt(event.target.value, 10));
+                  setExtractedPage(0);
+                }}
               />
             </Box>
           )}
@@ -253,6 +277,13 @@ const Pipeline = () => {
                 data={preparedOrders} 
                 ref={preparedTableRef}
                 onScroll={() => handleScroll(preparedTableRef, 'preparedScrollPos')}
+                page={preparedPage}
+                rowsPerPage={preparedRowsPerPage}
+                onPageChange={(event, newPage) => setPreparedPage(newPage)}
+                onRowsPerPageChange={(event) => {
+                  setPreparedRowsPerPage(parseInt(event.target.value, 10));
+                  setPreparedPage(0);
+                }}
               />
             </Box>
           )}
