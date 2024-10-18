@@ -24,7 +24,8 @@ const Architecture = () => {
 
   const [arrows] = useState([
     { from: 'restaurant', to: 'db' },
-    { from: 'db', to: 'pipeline' }
+    { from: 'db', to: 'pipeline' },
+    { from: 'pipeline', to: 'modelRegistry' }
   ]);
 
   useEffect(() => {
