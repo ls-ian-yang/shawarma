@@ -12,6 +12,7 @@ import Architecture from './components/Architecture';
 import { RestaurantProvider } from './context/RestaurantContext';
 import Pipeline from './components/Pipeline';
 import ModelRegistryPage from './components/ModelRegistryPage';
+import { ModelRegistryProvider } from './context/ModelRegistryContext';
 
 const theme = createTheme();
 
@@ -20,37 +21,39 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <RestaurantProvider>
-        <Router>
-          <AppBar position="static">
-            <Toolbar>
-              <Button color="inherit" component={Link} to="/architecture">
-                Architecture
-              </Button>
-              <Button color="inherit" component={Link} to="/">
-                Restaurant
-              </Button>
-              <Button color="inherit" component={Link} to="/db">
-                DB
-              </Button>
-              <Button color="inherit" component={Link} to="/pipeline">
-                Pipeline
-              </Button>
-              <Button color="inherit" component={Link} to="/model-registry">
-                Model Registry
-              </Button>
-            </Toolbar>
-          </AppBar>
+        <ModelRegistryProvider>
+          <Router>
+            <AppBar position="static">
+              <Toolbar>
+                <Button color="inherit" component={Link} to="/architecture">
+                  Architecture
+                </Button>
+                <Button color="inherit" component={Link} to="/">
+                  Restaurant
+                </Button>
+                <Button color="inherit" component={Link} to="/db">
+                  DB
+                </Button>
+                <Button color="inherit" component={Link} to="/pipeline">
+                  Pipeline
+                </Button>
+                <Button color="inherit" component={Link} to="/model-registry">
+                  Model Registry
+                </Button>
+              </Toolbar>
+            </AppBar>
 
-          <RestaurantPage />
+            <RestaurantPage />
 
-          <Routes>
-            <Route path="/" element={null} />
-            <Route path="/db" element={<DB />} />
-            <Route path="/architecture" element={<Architecture />} />
-            <Route path="/pipeline" element={<Pipeline />} />
-            <Route path="/model-registry" element={<ModelRegistryPage />} />
-          </Routes>
-        </Router>
+            <Routes>
+              <Route path="/" element={null} />
+              <Route path="/db" element={<DB />} />
+              <Route path="/architecture" element={<Architecture />} />
+              <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/model-registry" element={<ModelRegistryPage />} />
+            </Routes>
+          </Router>
+        </ModelRegistryProvider>
       </RestaurantProvider>
     </ThemeProvider>
   );

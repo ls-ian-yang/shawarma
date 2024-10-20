@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { saveOrderToCSV, loadOrderHistoryFromCSV } from '../utils/csvUtils';
 import Waiter from '../models/Waiter';
 import SimpleModel from '../models/SimpleModel';
-import ModelRegistry from '../models/ModelRegistry';
 
 export const RestaurantContext = createContext();
 
@@ -16,7 +15,6 @@ export const RestaurantProvider = ({ children }) => {
   const [orderHistory, setOrderHistory] = useState([]);
   const [orderNumber, setOrderNumberState] = useState(1);
   const [waiter] = useState(() => new Waiter(new SimpleModel()));
-  const [modelRegistry] = useState(() => new ModelRegistry());
 
   // Load metadata from local storage and order history from CSV on initial render
   useEffect(() => {
@@ -118,7 +116,6 @@ export const RestaurantProvider = ({ children }) => {
     getPreparedData,
     getOrderHistorySnapshot,
     waiter,
-    modelRegistry,
   };
 
   return (

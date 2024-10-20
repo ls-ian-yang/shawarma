@@ -1,25 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRestaurant } from '../context/RestaurantContext';
+import { useModelRegistry } from '../context/ModelRegistryContext';
 import { Card, CardContent, Typography, Button, Box, Paper, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ButtonBase } from '@mui/material';
 
 const ModelRegistryPage = () => {
-  const { modelRegistry, waiter, setCurrentPage } = useRestaurant();
-  const [models, setModels] = useState([]);
+  const { waiter, setCurrentPage} = useRestaurant();
+  const { models, deleteModel, updateModels } = useModelRegistry();
   const [selectedModel, setSelectedModel] = useState(null);
   const [currentStaffModel, setCurrentStaffModel] = useState({ version: '(No version available)' });
   const [deleteConfirmation, setDeleteConfirmation] = useState({ open: false, version: null });
 
   useEffect(() => {
     setCurrentPage('modelRegistry');
-    updateModels();
     updateCurrentStaffModel();
-  }, [setCurrentPage]);
+    updateModels(); // Fetch latest models when component mounts
+  }, [setCurrentPage, updateModels]);
 
-  const updateModels = () => {
-    setModels(modelRegistry.getAllModels());
-  };
-
-  const updateCurrentStaffModel = () => {
+  const updateCurrentStaffModel = useCallback(() => {
     try {
       const staffModel = waiter.getModel();
       setCurrentStaffModel(staffModel && staffModel.version ? 
@@ -30,7 +27,7 @@ const ModelRegistryPage = () => {
       console.error('Error getting current model:', error);
       setCurrentStaffModel({ version: '(No version available)' });
     }
-  };
+  }, [waiter]);
 
   const handleSelectModel = (model) => {
     setSelectedModel(model);
@@ -38,7 +35,7 @@ const ModelRegistryPage = () => {
 
   const handleLoadModelToStaff = () => {
     if (selectedModel) {
-      const model = modelRegistry.getModelByVersion(selectedModel.version);
+      const model = Array.from(models.values()).find(m => m.version === selectedModel.version);
       if (model) {
         waiter.setModel(model);
         alert(`Model version ${selectedModel.version} loaded to staff successfully!`);
@@ -54,10 +51,9 @@ const ModelRegistryPage = () => {
   };
 
   const handleDeleteConfirmed = () => {
-    const success = modelRegistry.deleteModel(deleteConfirmation.version);
+    const success = deleteModel(deleteConfirmation.version);
     if (success) {
       alert(`Model version ${deleteConfirmation.version} deleted successfully!`);
-      updateModels();
       updateCurrentStaffModel();
       if (selectedModel && selectedModel.version === deleteConfirmation.version) {
         setSelectedModel(null);
@@ -79,7 +75,7 @@ const ModelRegistryPage = () => {
             gridTemplateColumns: 'repeat(5, 1fr)', 
             gap: 2
           }}>
-            {models.map((model) => (
+            {Array.from(models.values()).map((model) => (
               <ButtonBase
                 key={model.version}
                 onClick={() => handleSelectModel(model)}
