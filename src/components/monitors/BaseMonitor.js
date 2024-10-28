@@ -133,8 +133,17 @@ const BaseMonitor = ({ title, data, options }) => {
         
         const rect = chart.canvas.getBoundingClientRect();
         const y = event.clientY - rect.top;
-        const yValue = chart.scales.y.getValueForPixel(y);
-        setHoveredValue(yValue);
+        
+        // Get the chart area bounds
+        const chartArea = chart.chartArea;
+        
+        // Check if mouse is within the chart area (not including axes)
+        if (y >= chartArea.top && y <= chartArea.bottom) {
+          const yValue = chart.scales.y.getValueForPixel(y);
+          setHoveredValue(yValue);
+        } else {
+          setHoveredValue(null);
+        }
       });
 
       node.canvas.addEventListener('mouseleave', () => {
@@ -147,8 +156,15 @@ const BaseMonitor = ({ title, data, options }) => {
         
         const rect = chart.canvas.getBoundingClientRect();
         const y = event.clientY - rect.top;
-        const yValue = chart.scales.y.getValueForPixel(y);
-        setBaseline(yValue);
+        
+        // Get the chart area bounds
+        const chartArea = chart.chartArea;
+        
+        // Only set baseline if click is within chart area (not including axes)
+        if (y >= chartArea.top && y <= chartArea.bottom) {
+          const yValue = chart.scales.y.getValueForPixel(y);
+          setBaseline(yValue);
+        }
       });
     }
   }, []);
@@ -163,12 +179,17 @@ const BaseMonitor = ({ title, data, options }) => {
             type: 'line',
             yMin: baseline,
             yMax: baseline,
-            borderColor: 'rgba(255, 0, 0, 1)',
+            borderColor: 'rgba(255, 0, 0, 1)', // Changed to 50% opacity
             borderWidth: 2,
             label: {
               display: true,
               content: `Baseline: ${baseline.toFixed(2)}`,
-              position: 'start'
+              position: 'start',
+              backgroundColor: 'rgba(0, 0, 0, 0.4)', // Made label background semi-transparent
+              color: 'white', // Made text white for better contrast
+              font: {
+                weight: 'bold'
+              }
             }
           } : undefined,
           hoverLine: hoveredValue ? {
