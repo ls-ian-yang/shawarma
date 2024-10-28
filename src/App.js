@@ -13,6 +13,7 @@ import { RestaurantProvider } from './context/RestaurantContext';
 import Pipeline from './components/Pipeline';
 import ModelRegistryPage from './components/ModelRegistryPage';
 import { ModelRegistryProvider } from './context/ModelRegistryContext';
+import Monitor from './components/Monitor';
 
 const theme = createTheme();
 
@@ -40,6 +41,9 @@ function App() {
                 <Button color="inherit" component={Link} to="/model-registry">
                   Model Registry
                 </Button>
+                <Button color="inherit" component={Link} to="/monitor">
+                  Monitor
+                </Button>
               </Toolbar>
             </AppBar>
 
@@ -51,6 +55,7 @@ function App() {
               <Route path="/architecture" element={<Architecture />} />
               <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/model-registry" element={<ModelRegistryPage />} />
+              <Route path="/monitor" element={<Monitor />} />
             </Routes>
           </Router>
         </ModelRegistryProvider>
