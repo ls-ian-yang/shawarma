@@ -3,11 +3,21 @@ import { useRestaurant } from '../context/RestaurantContext';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   TextField, Button, CircularProgress, Typography, Box, Accordion, AccordionSummary, 
-  AccordionDetails, LinearProgress, TablePagination
+  AccordionDetails, LinearProgress, TablePagination, styled
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useModelRegistry } from '../context/ModelRegistryContext';
+
+const CommitButton = styled(Button)(({ allStepsCompleted }) => ({
+  position: 'absolute',
+  top: '16px',
+  right: '16px',
+  backgroundColor: allStepsCompleted ? 'primary.main' : 'grey.500',
+  '&:hover': {
+    backgroundColor: allStepsCompleted ? 'primary.dark' : 'grey.600',
+  },
+}));
 
 const Pipeline = () => {
   const { orderHistory, waiter, commitModel, trainAndSaveModel } = useRestaurant();
@@ -22,6 +32,8 @@ const Pipeline = () => {
   const [isTraining, setIsTraining] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState(0);
   const [tempModel, setTempModel] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [accuracy, setAccuracy] = useState(null);
 
   const extractedTableRef = useRef(null);
   const preparedTableRef = useRef(null);
@@ -37,6 +49,8 @@ const Pipeline = () => {
     validate: false,
     prepare: false,
     train: false,
+    evaluate: false,
+    validateModel: false,
   });
 
   const handleAccordionChange = (panel) => (event, isExpanded) => {
@@ -160,10 +174,23 @@ const Pipeline = () => {
     </>
   ));
 
+  const areAllStepsComplete = useCallback(() => {
+    return Object.values(completedSteps).every(step => step);
+  }, [completedSteps]);
+
   return (
-    <Box sx={{ padding: 2 }}>
+    <Box sx={{ padding: 2, position: 'relative' }}>
       <Typography variant="h4" gutterBottom>Data Cleaning Pipeline</Typography>
       
+      <CommitButton
+        variant="contained"
+        onClick={handleCommitModel}
+        disabled={!areAllStepsComplete()}
+        allStepsCompleted={areAllStepsComplete()}
+      >
+        Commit Model
+      </CommitButton>
+
       <Accordion expanded={expandedPanel === 'panel1'} onChange={handleAccordionChange('panel1')}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <AccordionHeader title="1. Data Extraction" step="extract" />
@@ -285,20 +312,105 @@ const Pipeline = () => {
             </Box>
           )}
           {tempModel && (
-            <Button 
-              variant="contained" 
-              onClick={handleCommitModel} 
-              sx={{ mt: 2, ml: 2 }}
-            >
-              Commit Model
-            </Button>
-          )}
-          {tempModel && (
             <Paper elevation={3} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>Temporary Model Info</Typography>
               <Typography>Version: {tempModel.version}</Typography>
               <Typography>Last Trained: {tempModel.lastTrained}</Typography>
             </Paper>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion expanded={expandedPanel === 'panel5'} onChange={handleAccordionChange('panel5')}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <AccordionHeader title="5. Evaluate Model" step="evaluate" />
+        </AccordionSummary>
+        <AccordionDetails>
+          <Button 
+            variant="contained" 
+            onClick={async () => {
+              setIsValidating(true);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              setIsValidating(false);
+              setAccuracy(Math.round(Math.random() * 20 + 80));
+              setCompletedSteps(prev => ({ ...prev, evaluate: true }));
+            }}
+            disabled={!completedSteps.train}
+          >
+            Evaluate Model
+          </Button>
+          {isValidating && (
+            <Box sx={{ width: '100%', mt: 2 }}>
+              <LinearProgress />
+            </Box>
+          )}
+          {accuracy && (
+            <Typography sx={{ mt: 2, color: 'success.main' }}>
+              Accuracy: {accuracy}%
+            </Typography>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion expanded={expandedPanel === 'panel6'} onChange={handleAccordionChange('panel6')}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <AccordionHeader title="6. Validate Model" step="validateModel" />
+        </AccordionSummary>
+        <AccordionDetails>
+          <Button 
+            variant="contained" 
+            onClick={async () => {
+              setMetrics({
+                accuracy: {
+                  new: '92%',
+                  current: '89%',
+                  benchmark: '85%'
+                },
+                qps: {
+                  new: '1200',
+                  current: '1000',
+                  benchmark: '800'
+                },
+                invalidRate: {
+                  new: '0.5%',
+                  current: '1.2%',
+                  benchmark: '2%'
+                },
+                unitTests: {
+                  new: '100%',
+                  current: '100%',
+                  benchmark: '98%'
+                }
+              });
+              setCompletedSteps(prev => ({ ...prev, validateModel: true }));
+            }}
+            disabled={!completedSteps.evaluate}
+          >
+            Validate Model
+          </Button>
+          {metrics && (
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Metric</TableCell>
+                    <TableCell>New Model</TableCell>
+                    <TableCell>Current Model</TableCell>
+                    <TableCell>Benchmark</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(metrics).map(([metric, values]) => (
+                    <TableRow key={metric}>
+                      <TableCell>{metric.charAt(0).toUpperCase() + metric.slice(1)}</TableCell>
+                      <TableCell>{values.new}</TableCell>
+                      <TableCell>{values.current}</TableCell>
+                      <TableCell>{values.benchmark}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </AccordionDetails>
       </Accordion>
