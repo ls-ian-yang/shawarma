@@ -1,17 +1,44 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import BaseMonitor from './BaseMonitor';
+import { BaseMonitor, MonitorBase } from './BaseMonitor';
 import { useRestaurant } from '../../context/RestaurantContext';
+
+class ResponseTimeMonitorLogic extends MonitorBase {
+  constructor() {
+    super('Average Response Time (By 5-Order Batches)', 'Response Time (ms)', 'rgb(153, 102, 255)');
+    this.BATCH_SIZE = 5;
+  }
+
+  getLabels(data) {
+    return data.map(point => `Batch ${point.orderRange}`);
+  }
+
+  getData(data) {
+    return data.map(point => point.avgResponseTime.toFixed(2));
+  }
+
+  getYAxisMax(data) {
+    return Math.max(...data.map(point => point.avgResponseTime)) + 10;
+  }
+
+  getTooltipLabels(point) {
+    if (!point) return [];
+    return [
+      `Avg Response Time: ${point.avgResponseTime.toFixed(2)} ms`,
+      `Orders: ${point.orderRange}`,
+      `Time: ${new Date(point.time).toLocaleTimeString()}`
+    ];
+  }
+}
 
 const ResponseTimeMonitor = () => {
   const { orderHistory } = useRestaurant();
   const [responseTimeData, setResponseTimeData] = useState([]);
-  const BATCH_SIZE = 5; // Calculate average for every 5 orders
-  const MAX_POINTS = 30; // Show last 30 batches
+  const monitor = useMemo(() => new ResponseTimeMonitorLogic(), []);
   
   useEffect(() => {
     const updateResponseTime = () => {
       // Only process if we have enough orders
-      if (!orderHistory || orderHistory.length < BATCH_SIZE) {
+      if (!orderHistory || orderHistory.length < monitor.BATCH_SIZE) {
         setResponseTimeData([]);
         return;
       }
@@ -22,23 +49,23 @@ const ResponseTimeMonitor = () => {
       );
 
       // Calculate number of complete batches
-      const numBatches = Math.floor(sortedOrders.length / BATCH_SIZE);
+      const numBatches = Math.floor(sortedOrders.length / monitor.BATCH_SIZE);
       const responseTimePoints = [];
 
       // Process each complete batch
-      for (let i = Math.max(0, numBatches - MAX_POINTS); i < numBatches; i++) {
-        const batchStart = i * BATCH_SIZE;
-        const batch = sortedOrders.slice(batchStart, batchStart + BATCH_SIZE);
+      for (let i = Math.max(0, numBatches - 30); i < numBatches; i++) {
+        const batchStart = i * monitor.BATCH_SIZE;
+        const batch = sortedOrders.slice(batchStart, batchStart + monitor.BATCH_SIZE);
         
         if (batch.every(order => order && typeof order.predictionTime === 'number')) {
           const avgResponseTime = batch.reduce((sum, order) => 
-            sum + order.predictionTime, 0) / BATCH_SIZE;
+            sum + order.predictionTime, 0) / monitor.BATCH_SIZE;
 
           responseTimePoints.push({
             batchNumber: i + 1,
             time: batch[batch.length - 1].orderTimestamp,
             avgResponseTime,
-            orderRange: `${batchStart + 1}-${batchStart + BATCH_SIZE}`
+            orderRange: `${batchStart + 1}-${batchStart + monitor.BATCH_SIZE}`
           });
         }
       }
@@ -114,9 +141,9 @@ const ResponseTimeMonitor = () => {
 
   return (
     <BaseMonitor
-      title="Average Response Time (By 5-Order Batches)"
-      data={chartData}
-      options={options}
+      title={monitor.title}
+      data={monitor.createChartData(responseTimeData)}
+      options={monitor.createOptions(responseTimeData)}
     />
   );
 };
