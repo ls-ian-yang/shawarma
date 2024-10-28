@@ -3,10 +3,11 @@ import { useRestaurant } from '../context/RestaurantContext';
 import { 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
   TextField, Button, CircularProgress, Typography, Box, Accordion, AccordionSummary, 
-  AccordionDetails, LinearProgress, TablePagination, styled
+  AccordionDetails, LinearProgress, TablePagination, styled, Snackbar, Alert
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useModelRegistry } from '../context/ModelRegistryContext';
 
 const CommitButton = styled(Button)(({ allStepsCompleted }) => ({
@@ -18,6 +19,13 @@ const CommitButton = styled(Button)(({ allStepsCompleted }) => ({
     backgroundColor: allStepsCompleted ? 'primary.dark' : 'grey.600',
   },
 }));
+
+// Add new styled component next to CommitButton
+const AutoRunButton = styled(Button)({
+  position: 'absolute',
+  top: '16px',
+  right: '180px',  // Increased from 140px to 180px to move it more to the left
+});
 
 const Pipeline = () => {
   const { orderHistory, waiter, commitModel, trainAndSaveModel } = useRestaurant();
@@ -34,6 +42,9 @@ const Pipeline = () => {
   const [tempModel, setTempModel] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [committedVersion, setCommittedVersion] = useState(null);
 
   const extractedTableRef = useRef(null);
   const preparedTableRef = useRef(null);
@@ -60,6 +71,11 @@ const Pipeline = () => {
   const handleExtract = useCallback((orderHistory) => {
     const start = parseInt(startOrderNumber);
     const end = parseInt(endOrderNumber);
+    
+    if (isNaN(start) || isNaN(end)) {
+      return;
+    }
+    
     const filtered = orderHistory.filter(order => 
       order.orderNumber >= start && order.orderNumber <= end
     );
@@ -110,6 +126,8 @@ const Pipeline = () => {
   const handleCommitModel = useCallback(() => {
     if (tempModel) {
       modelCommitModel(tempModel);
+      setCommittedVersion(tempModel.version); // Store the version before clearing tempModel
+      setOpenSnackbar(true);
       setTempModel(null);
     }
   }, [tempModel, modelCommitModel]);
@@ -178,10 +196,90 @@ const Pipeline = () => {
     return Object.values(completedSteps).every(step => step);
   }, [completedSteps]);
 
+  // Add new auto run function
+  const handleAutoRun = useCallback(async () => {
+    setIsAutoRunning(true);
+    
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    try {
+      // Step 1: Extract
+      setExpandedPanel('panel1');
+      await wait(500);
+      
+      setStartOrderNumber('1');
+      setEndOrderNumber('100');
+      await wait(1000);
+      
+      const extractButton = document.querySelector('[data-testid="extract-button"]');
+      if (extractButton) {
+        extractButton.click();
+      }
+      await wait(1000);
+
+      // Step 2: Validate
+      setExpandedPanel('panel2');
+      await wait(500);
+      const validateButton = document.querySelector('[data-testid="validate-button"]');
+      if (validateButton) {
+        validateButton.click();
+      }
+      await wait(1000);
+
+      // Step 3: Prepare
+      setExpandedPanel('panel3');
+      await wait(500);
+      const prepareButton = document.querySelector('[data-testid="prepare-button"]');
+      if (prepareButton) {
+        prepareButton.click();
+      }
+      await wait(1000);
+
+      // Step 4: Train
+      setExpandedPanel('panel4');
+      await wait(500);
+      const trainButton = document.querySelector('[data-testid="train-button"]');
+      if (trainButton) {
+        trainButton.click();
+      }
+      await wait(1000);
+
+      // Step 5: Evaluate
+      setExpandedPanel('panel5');
+      await wait(500);
+      const evaluateButton = document.querySelector('[data-testid="evaluate-button"]');
+      if (evaluateButton) {
+        evaluateButton.click();
+      }
+      await wait(1000);
+
+      // Step 6: Validate Model
+      setExpandedPanel('panel6');
+      await wait(500);
+      const validateModelButton = document.querySelector('[data-testid="validate-model-button"]');
+      if (validateModelButton) {
+        validateModelButton.click();
+      }
+      await wait(1000);
+
+    } finally {
+      setIsAutoRunning(false);
+    }
+  }, [setExpandedPanel, setStartOrderNumber, setEndOrderNumber]);
+
   return (
     <Box sx={{ padding: 2, position: 'relative' }}>
       <Typography variant="h4" gutterBottom>Data Cleaning Pipeline</Typography>
       
+      <AutoRunButton
+        variant="contained"
+        onClick={handleAutoRun}
+        disabled={isAutoRunning}
+        sx={{ backgroundColor: 'secondary.main' }}
+      >
+        {isAutoRunning ? 'Running...' : 'Auto Run'}
+      </AutoRunButton>
+
       <CommitButton
         variant="contained"
         onClick={handleCommitModel}
@@ -211,7 +309,13 @@ const Pipeline = () => {
               onChange={(e) => setEndOrderNumber(e.target.value)}
               sx={{ marginRight: 1 }}
             />
-            <Button variant="contained" onClick={() => handleExtract(orderHistory)}>Extract</Button>
+            <Button 
+              variant="contained" 
+              onClick={() => handleExtract(orderHistory)}
+              data-testid="extract-button"  // Add this line
+            >
+              Extract
+            </Button>
           </Box>
           {extractedOrders.length > 0 && (
             <Box>
@@ -244,6 +348,7 @@ const Pipeline = () => {
             variant="contained" 
             onClick={handleValidate} 
             disabled={isValidating || extractedOrders.length === 0}
+            data-testid="validate-button"
           >
             Validate
           </Button>
@@ -269,6 +374,7 @@ const Pipeline = () => {
             variant="contained" 
             onClick={handlePrepare} 
             disabled={isPreparing || isValidating || extractedOrders.length === 0}
+            data-testid="prepare-button"
           >
             {isPreparing ? <CircularProgress size={24} /> : 'Prepare'}
           </Button>
@@ -303,6 +409,7 @@ const Pipeline = () => {
             variant="contained" 
             onClick={handleTrain} 
             disabled={isTraining || preparedOrders.length === 0}
+            data-testid="train-button"
           >
             Train Model
           </Button>
@@ -336,6 +443,7 @@ const Pipeline = () => {
               setCompletedSteps(prev => ({ ...prev, evaluate: true }));
             }}
             disabled={!completedSteps.train}
+            data-testid="evaluate-button"
           >
             Evaluate Model
           </Button>
@@ -385,6 +493,7 @@ const Pipeline = () => {
               setCompletedSteps(prev => ({ ...prev, validateModel: true }));
             }}
             disabled={!completedSteps.evaluate}
+            data-testid="validate-model-button"
           >
             Validate Model
           </Button>
@@ -414,6 +523,29 @@ const Pipeline = () => {
           )}
         </AccordionDetails>
       </Accordion>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="success"
+          icon={<CheckCircleOutlineIcon />}
+          sx={{ 
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            '& .MuiAlert-icon': {
+              fontSize: '1.5rem'
+            }
+          }}
+        >
+          Model #{committedVersion} Saved to Registry!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
